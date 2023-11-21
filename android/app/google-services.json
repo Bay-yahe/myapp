@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "426256480277",
+    "project_id": "bay-yahe-9f408",
+    "storage_bucket": "bay-yahe-9f408.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426256480277:android:c7e13f1c8436b75c27761c",
+        "android_client_info": {
+          "package_name": "com.example.bay_yahe_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "426256480277-esml88vi656hfo7uvl075qrfq8n7h51k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bay_yahe_app",
+            "certificate_hash": "ac42744a7f08e75959464a74b42d548ad0365905"
+          }
+        },
+        {
+          "client_id": "426256480277-i1l9rmnveven06mqn7cplb5uv4v3mhbk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGxfj7kJ84evqltYvO4I_lbZi0bP9KqvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "426256480277-i1l9rmnveven06mqn7cplb5uv4v3mhbk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "426256480277-bje0m2e7tccp031anh1930g71l9r29i7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.bayYaheApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
