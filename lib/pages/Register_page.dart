@@ -1,3 +1,4 @@
+import 'package:bay_yahe_app/pages/personal_info.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bay_yahe_app/components/square_tile.dart';
@@ -20,7 +21,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  // sign user up method
   void signUserUp() async {
     // show loading circle
     showDialog(
@@ -31,7 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
         );
       },
     );
-    // try creating the user account
+
     try {
       // confirm password
       if (passwordController.text == confirmPasswordController.text) {
@@ -39,21 +39,32 @@ class _RegisterPageState extends State<RegisterPage> {
           email: emailController.text,
           password: passwordController.text,
         );
-      } else {
-        // show error message, when password don't match
 
+        // If the user is successfully registered, navigate to PersonalInfoPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PersonalInfoPage(),
+          ),
+        );
+      } else {
+        // show error message when passwords don't match
         errormessage("Passwords don't match!");
       }
-      // pop the loading circle
 
+      // pop the loading circle
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       // pop the loading circle
-
       Navigator.pop(context);
-      //show error message
 
-      errormessage(e.code);
+      // show error message based on the error code
+      if (e.code == 'email-already-in-use') {
+        errormessage("Email is already registered, please login.");
+      } else {
+        // handle other authentication errors
+        errormessage(e.message ?? "An error occurred");
+      }
     }
   }
 

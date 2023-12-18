@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bay_yahe_app/components/square_tile.dart';
 import 'package:bay_yahe_app/components/textfield.dart';
@@ -16,7 +15,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   // text editing controllers
   final emailController = TextEditingController();
-
   final passwordController = TextEditingController();
 
   // sign user in method
@@ -31,25 +29,18 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
+      await AuthService().signInWithGoogle();
       // pop the loading circle
-
       Navigator.pop(context);
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       // pop the loading circle
-
       Navigator.pop(context);
-      //show error message
-
-      errormessage(e.code);
+      // show error message
+      errormessage(e.toString());
     }
   }
 
-  //error message
-
+  // error message
   void errormessage(String message) {
     showDialog(
       context: context,
@@ -91,27 +82,21 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: 16,
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 // email textfield
                 MyTextField(
                   controller: emailController,
                   hintText: 'Email',
                   obscureText: false,
                 ),
-
                 const SizedBox(height: 10),
-
                 // password textfield
                 MyTextField(
                   controller: passwordController,
                   hintText: 'Password',
                   obscureText: true,
                 ),
-
                 const SizedBox(height: 10),
-
                 // forgot password?
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
@@ -125,17 +110,13 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 // sign in button
                 MyButton(
                   text: "Sign In",
                   onTap: signUserIn,
                 ),
-
                 const SizedBox(height: 50),
-
                 // or continue with
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
@@ -163,23 +144,19 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 // google + apple sign in buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // google button
-
                     SquareTile(
-                        onTap: () => AuthService().signInWithGoogle(),
-                        imagePath: 'lib/images/google.png'),
+                      onTap: () => AuthService().signInWithGoogle(),
+                      imagePath: 'lib/images/google.png',
+                    ),
                   ],
                 ),
-
                 const SizedBox(height: 40),
-
                 // not a member? register now
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -1,10 +1,11 @@
 //import 'dart:developer';
 //import 'dart:ffi';
 
+import 'package:bay_yahe_app/screens/main/main_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'image_upload.dart';
 
 class PersonalInfoPage extends StatefulWidget {
   const PersonalInfoPage({super.key});
@@ -122,9 +123,13 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
+        onPressed: () async {
           if (_formKey.currentState!.validate()) {
-            // Create a map of the form data
+            // Retrieve the currently logged-in user's email
+            User? user = FirebaseAuth.instance.currentUser;
+            String? userEmail = user?.email;
+
+            // Create a map of the form data including the user's email
             Map<String, dynamic> formData = {
               'firstname': firstnameController.text,
               'lastname': lastnameController.text,
@@ -132,16 +137,18 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
               'address': addressController.text,
               'birthday':
                   selectedDate != null ? dateFormat.format(selectedDate!) : '',
+              'email': userEmail, // Add user's email to the data
             };
 
             // Call the function to add data to Firestore
-
-            FirebaseFirestore.instance.collection('client_user').add(formData);
+            await FirebaseFirestore.instance
+                .collection('client_user')
+                .add(formData);
 
             // Navigate to the next page when the form is valid.
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ImageUpload()),
+              MaterialPageRoute(builder: (context) => const MainScreen()),
             );
           }
         },
@@ -150,69 +157,3 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     );
   }
 }
-
-//Future<void> addDataToFirestore(Map<String, dynamic> formData) async {
-//  FirebaseFirestore firestore = FirebaseFirestore.instance;
-//
-//  try {
-//    await firestore.collection('users').add(formData);
-//  } catch (e) {
-//    print('Error adding data to Firestore: $e');
-//  }
-//}
-
-//class User {
-//  final String firstname;
-//  final String lastname;
-//  final Long contact;
-//  final String address;
-//  final DateFormat birthdate;
-//  final String? id;
-
-//  User(
-//      {required this.firstname,
-//      required this.lastname,
-//      required this.contact,
-//      required this.address,
-//      required this.birthdate,
-//      this.id});
-//
-//  factory User.fromJson(Map<String, dynamic> json) {
-//    return User(
-//        firstname: json['firstname'],
-//        lastname: (json['lastname']),
-//        contact: json['contact'],
-//        address: json['address'],
-//        birthdate: json['birthdate'],
-//        id: json['id']);
-//  }
-
-//  toJson() {
-//    return {
- //     'firstname': firstname,
-//      'lastname': lastname,
-//      'contact': contact,
-//      'address': address,
-//      'birthdate': birthdate,
-//      'id': id
-//    };
-//  }
-//}
-
-//Instantiate Firestore
-//final db = FirebaseFirestore.instance;
-
-//reguser({firstname, lastname, contact, address, birthdate}) async {
-//  final docRef = db.collection('User').doc();
-//  User NU = User(
-//      firstname: firstname,
-//      lastname: lastname,
-//      contact: contact,
-//      birthdate: birthdate,
-//      address: address,
-//      id: docRef.id);
-//
-//  await docRef.set(NU.toJson()).then(
-//      (value) => log("Appointment booked successfully!"),
-//      onError: (e) => log("Error booking appointment: $e"));
-//}

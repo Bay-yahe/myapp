@@ -1,16 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class ProfilePic extends StatelessWidget {
-  ProfilePic({super.key});
+  ProfilePic({Key? key}) : super(key: key);
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final user = FirebaseAuth.instance.currentUser!;
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  final CollectionReference users =
-      FirebaseFirestore.instance.collection('users');
+  final User user = FirebaseAuth.instance.currentUser!;
+  final CollectionReference clientUsers =
+      FirebaseFirestore.instance.collection('client_user');
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +16,8 @@ class ProfilePic extends StatelessWidget {
     String? currentUserEmail = user?.email;
 
     return StreamBuilder<QuerySnapshot>(
-      stream: users.where('email', isEqualTo: currentUserEmail).snapshots(),
+      stream:
+          clientUsers.where('email', isEqualTo: currentUserEmail).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildLoadingState();
@@ -35,42 +34,19 @@ class ProfilePic extends StatelessWidget {
   }
 
   Widget _buildLoadingState() {
-    return Container(
-      width: double.infinity,
-      height: 150,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 118, 230, 168),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 25,
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return _buildContainer(
+        child: const Center(child: CircularProgressIndicator()));
   }
 
   Widget _buildErrorState(String error) {
-    return Container(
-      width: double.infinity,
-      height: 150,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 118, 230, 168),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 25,
-      ),
-      child: Center(
-        child: Text('Error: $error'),
-      ),
-    );
+    return _buildContainer(child: Center(child: Text('Error: $error')));
   }
 
   Widget _buildNoDataState() {
+    return _buildContainer(child: const Center(child: Text('No data found.')));
+  }
+
+  Widget _buildContainer({required Widget child}) {
     return Container(
       width: double.infinity,
       height: 150,
@@ -82,26 +58,14 @@ class ProfilePic extends StatelessWidget {
         horizontal: 20,
         vertical: 25,
       ),
-      child: const Center(
-        child: Text('No data found.'),
-      ),
+      child: child,
     );
   }
 
   Widget _buildProfileWidget(Map<String, dynamic> data) {
     String? profileImageUrl = user.photoURL;
 
-    return Container(
-      width: double.infinity,
-      height: 150,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 118, 230, 168),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 25,
-      ),
+    return _buildContainer(
       child: Row(
         children: [
           if (profileImageUrl != null)
@@ -126,7 +90,7 @@ class ProfilePic extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                data['name'],
+                data['firstname'] + ' ' + data['lastname'],
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
