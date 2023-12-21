@@ -1,7 +1,6 @@
-// BookingForm.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'pickup_destination_page.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoding/geocoding.dart';
 
 void main() => runApp(MyApp());
 
@@ -9,190 +8,112 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: BookingForm(),
+      home: MapScreen(),
     );
   }
 }
 
-class BookingForm extends StatefulWidget {
+class MapScreen extends StatefulWidget {
   @override
-  _BookingFormState createState() => _BookingFormState();
+  _MapScreenState createState() => _MapScreenState();
 }
 
-class _BookingFormState extends State<BookingForm> {
-  String bookingStatus = 'ASAP';
-  String pickupLocation = 'Select Pickup Location';
-  String destination = 'Select Destination';
-  DateTime? selectedDate = DateTime.now();
-  TimeOfDay? selectedTime = TimeOfDay.now();
+class _MapScreenState extends State<MapScreen> {
+  late GoogleMapController _controller;
+  TextEditingController _locationController = TextEditingController();
+  LatLng? _selectedLocation;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Booking Form'),
+        title: Text('Location Picker'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                _showBookingStatusDialog();
-              },
-              child: Text('Booking Status: $bookingStatus'),
+      body: Stack(
+        children: [
+          GoogleMap(
+            onMapCreated: (controller) => _controller = controller,
+            onTap: _selectLocation,
+            markers: _markers,
+            initialCameraPosition: CameraPosition(
+              target:
+                  LatLng(14.2311, 121.0922), // Coordinates for Barangay Puypuy
+              zoom: 15,
             ),
-            if (bookingStatus == 'Scheduled') ...[
-              SizedBox(height: 16),
-              Text(
-                  'Selected Date: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : 'Not set'}'),
-              SizedBox(height: 8),
-              Text(
-                  'Selected Time: ${selectedTime != null ? selectedTime!.format(context) : 'Not set'}'),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _selectDate(context),
-                    child: Text('Select Date'),
-                  ),
-                  SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () => _selectTime(context),
-                    child: Text('Select Time'),
-                  ),
-                ],
-              ),
-            ],
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _navigateToPickupDestinationPage(true);
-              },
-              child: Text('Pickup Location: $pickupLocation'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _navigateToPickupDestinationPage(false);
-              },
-              child: Text('Destination: $destination'),
-            ),
-            SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                _submitBooking();
-              },
-              child: Text('Book Now'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showBookingStatusDialog() async {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Select Booking Status'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _updateBookingStatus('ASAP');
-                },
-                child: Text('ASAP'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  _updateBookingStatus('Scheduled');
-                },
-                child: Text('Scheduled'),
-              ),
-            ],
           ),
-        );
-      },
-    );
-  }
-
-  void _updateBookingStatus(String status) {
-    setState(() {
-      bookingStatus = status;
-      if (status == 'ASAP') {
-        selectedDate = null;
-        selectedTime = null;
-      }
-    });
-    Navigator.of(context).pop();
-  }
-
-  void _navigateToPickupDestinationPage(bool isPickup) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PickupDestinationPage(
-          isPickup: isPickup,
-          onLocationSelected: (location) {
-            _updateLocation(isPickup, location);
-          },
-        ),
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: TextField(
+              controller: _locationController,
+              decoration: InputDecoration(
+                hintText: 'Selected Location',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _markers.clear();
+                      _locationController.clear();
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
+  Set<Marker> _markers = Set<Marker>();
+
+  void _selectLocation(LatLng position) async {
+    _markers.clear();
+    _markers.add(
+      Marker(
+        markerId: MarkerId('selected-location'),
+        position: position,
+        draggable: true,
+        onDragEnd: (dragPosition) {
+          _updateSelectedLocation(dragPosition);
+        },
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueRed,
+        ),
+        infoWindow: InfoWindow(
+          title: 'Selected Location',
+          snippet: 'This is the location you picked.',
+        ),
+      ),
     );
 
-    if (pickedDate != null && pickedDate != selectedDate) {
-      setState(() {
-        selectedDate = pickedDate;
-      });
+    _controller.animateCamera(CameraUpdate.newLatLng(position));
+
+    _selectedLocation = position;
+
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
+
+    if (placemarks != null && placemarks.isNotEmpty) {
+      Placemark placemark = placemarks[0];
+      String address =
+          '${placemark.name}, ${placemark.locality}, ${placemark.country}';
+      _locationController.text = address;
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: selectedTime ?? TimeOfDay.now(),
-    );
+  void _updateSelectedLocation(LatLng position) async {
+    _selectedLocation = position;
 
-    if (pickedTime != null && pickedTime != selectedTime) {
-      setState(() {
-        selectedTime = pickedTime;
-      });
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
+
+    if (placemarks != null && placemarks.isNotEmpty) {
+      Placemark placemark = placemarks[0];
+      String address =
+          '${placemark.name}, ${placemark.locality}, ${placemark.country}';
+      _locationController.text = address;
     }
-  }
-
-  void _submitBooking() {
-    print('Booking Status: $bookingStatus');
-    print('Pickup Location: $pickupLocation');
-    print('Destination: $destination');
-
-    if (bookingStatus == 'Scheduled') {
-      print(
-          'Selected Date: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : 'Not set'}');
-      print(
-          'Selected Time: ${selectedTime != null ? selectedTime!.format(context) : 'Not set'}');
-    }
-  }
-
-  void _updateLocation(bool isPickup, String location) {
-    setState(() {
-      if (isPickup) {
-        pickupLocation = location;
-      } else {
-        destination = location;
-      }
-    });
   }
 }
