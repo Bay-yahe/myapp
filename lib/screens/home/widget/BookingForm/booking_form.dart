@@ -1,3 +1,4 @@
+// BookingForm.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'pickup_destination_page.dart';
@@ -102,19 +103,13 @@ class _BookingFormState extends State<BookingForm> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    bookingStatus = 'ASAP';
-                  });
-                  Navigator.of(context).pop();
+                  _updateBookingStatus('ASAP');
                 },
                 child: Text('ASAP'),
               ),
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    bookingStatus = 'Scheduled';
-                  });
-                  Navigator.of(context).pop();
+                  _updateBookingStatus('Scheduled');
                 },
                 child: Text('Scheduled'),
               ),
@@ -125,6 +120,17 @@ class _BookingFormState extends State<BookingForm> {
     );
   }
 
+  void _updateBookingStatus(String status) {
+    setState(() {
+      bookingStatus = status;
+      if (status == 'ASAP') {
+        selectedDate = null;
+        selectedTime = null;
+      }
+    });
+    Navigator.of(context).pop();
+  }
+
   void _navigateToPickupDestinationPage(bool isPickup) {
     Navigator.push(
       context,
@@ -132,13 +138,7 @@ class _BookingFormState extends State<BookingForm> {
         builder: (context) => PickupDestinationPage(
           isPickup: isPickup,
           onLocationSelected: (location) {
-            setState(() {
-              if (isPickup) {
-                pickupLocation = location;
-              } else {
-                destination = location;
-              }
-            });
+            _updateLocation(isPickup, location);
           },
         ),
       ),
@@ -184,5 +184,15 @@ class _BookingFormState extends State<BookingForm> {
       print(
           'Selected Time: ${selectedTime != null ? selectedTime!.format(context) : 'Not set'}');
     }
+  }
+
+  void _updateLocation(bool isPickup, String location) {
+    setState(() {
+      if (isPickup) {
+        pickupLocation = location;
+      } else {
+        destination = location;
+      }
+    });
   }
 }
