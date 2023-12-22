@@ -1,163 +1,198 @@
-import 'package:bay_yahe_app/screens/home/widget/map_screen.dart';
+// BookingForm.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'pickup_destination_page.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: BookingForm(),
+    );
+  }
+}
 
 class BookingForm extends StatefulWidget {
-  const BookingForm({super.key});
-
   @override
   _BookingFormState createState() => _BookingFormState();
 }
 
 class _BookingFormState extends State<BookingForm> {
-  DateTime selectedDate = DateTime.now();
-  TimeOfDay selectedTime = TimeOfDay.now(); // This will hold the selected time.
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: selectedTime,
-    );
-    if (picked != null && picked != selectedTime) {
-      setState(() {
-        selectedTime = picked;
-      });
-    }
-  }
+  String bookingStatus = 'ASAP';
+  String pickupLocation = 'Select Pickup Location';
+  String destination = 'Select Destination';
+  DateTime? selectedDate = DateTime.now();
+  TimeOfDay? selectedTime = TimeOfDay.now();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Booking Form',
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: const Color(0xFF33c072),
+        title: Text('Booking Form'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Contact number',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: () {
-                _selectDate(context);
-              },
-              child: IgnorePointer(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Date',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today),
-                  ),
-                  controller: TextEditingController(
-                    text: "${selectedDate.toLocal()}".split(' ')[0],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: () {
-                _selectTime(context);
-              },
-              child: IgnorePointer(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Time',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.access_time),
-                  ),
-                  controller: TextEditingController(
-                    text: selectedTime.format(context),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Location',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Destination',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             ElevatedButton(
               onPressed: () {
-                // Handle the booking logic here
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MapScreen()),
-                );
+                _showBookingStatusDialog();
               },
-              style: ButtonStyle(
-                backgroundColor:
-                    MaterialStateProperty.all(const Color(0xFF33c072)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Text('Booking Status: $bookingStatus'),
+            ),
+            if (bookingStatus == 'Scheduled') ...[
+              SizedBox(height: 16),
+              Text(
+                  'Selected Date: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : 'Not set'}'),
+              SizedBox(height: 8),
+              Text(
+                  'Selected Time: ${selectedTime != null ? selectedTime!.format(context) : 'Not set'}'),
+              SizedBox(height: 16),
+              Row(
                 children: [
-                  Icon(
-                    Icons.book,
-                    color: Colors.black45,
+                  ElevatedButton(
+                    onPressed: () => _selectDate(context),
+                    child: Text('Select Date'),
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Book Now',
-                    style: TextStyle(color: Colors.black),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () => _selectTime(context),
+                    child: Text('Select Time'),
                   ),
                 ],
               ),
+            ],
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _navigateToPickupDestinationPage(true);
+              },
+              child: Text('Pickup Location: $pickupLocation'),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                _navigateToPickupDestinationPage(false);
+              },
+              child: Text('Destination: $destination'),
+            ),
+            SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                _submitBooking();
+              },
+              child: Text('Book Now'),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-void main() {
-  runApp(MaterialApp(
-    home: Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Form'),
+  Future<void> _showBookingStatusDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select Booking Status'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _updateBookingStatus('ASAP');
+                },
+                child: Text('ASAP'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _updateBookingStatus('Scheduled');
+                },
+                child: Text('Scheduled'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _updateBookingStatus(String status) {
+    setState(() {
+      bookingStatus = status;
+      if (status == 'ASAP') {
+        selectedDate = null;
+        selectedTime = null;
+      }
+    });
+    Navigator.of(context).pop();
+  }
+
+  void _navigateToPickupDestinationPage(bool isPickup) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PickupDestinationPage(
+          isPickup: isPickup,
+          onLocationSelected: (location) {
+            _updateLocation(isPickup, location);
+          },
+        ),
       ),
-      body: const BookingForm(),
-    ),
-  ));
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: selectedTime ?? TimeOfDay.now(),
+    );
+
+    if (pickedTime != null && pickedTime != selectedTime) {
+      setState(() {
+        selectedTime = pickedTime;
+      });
+    }
+  }
+
+  void _submitBooking() {
+    print('Booking Status: $bookingStatus');
+    print('Pickup Location: $pickupLocation');
+    print('Destination: $destination');
+
+    if (bookingStatus == 'Scheduled') {
+      print(
+          'Selected Date: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : 'Not set'}');
+      print(
+          'Selected Time: ${selectedTime != null ? selectedTime!.format(context) : 'Not set'}');
+    }
+  }
+
+  void _updateLocation(bool isPickup, String location) {
+    setState(() {
+      if (isPickup) {
+        pickupLocation = location;
+      } else {
+        destination = location;
+      }
+    });
+  }
 }

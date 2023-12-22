@@ -42,7 +42,7 @@ class MenuIcon extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const BookingForm()),
+              MaterialPageRoute(builder: (context) => BookingForm()),
             );
           },
           icon: Image.asset(

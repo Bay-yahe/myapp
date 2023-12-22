@@ -7,14 +7,15 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class AccountScreen extends StatefulWidget {
-  AccountScreen({Key? key}) : super(key: key);
+  const AccountScreen({super.key});
 
   @override
   _AccountScreenState createState() => _AccountScreenState();
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  TextEditingController nameController = TextEditingController();
+  TextEditingController firstnameController = TextEditingController();
+  TextEditingController lastnameController = TextEditingController();
   TextEditingController emailAddressController = TextEditingController();
   TextEditingController contactNumberController = TextEditingController();
   TextEditingController birthdayController = TextEditingController();
@@ -24,7 +25,7 @@ class _AccountScreenState extends State<AccountScreen> {
   final user = FirebaseAuth.instance.currentUser!;
   final GoogleSignIn googleSignIn = GoogleSignIn();
   final CollectionReference users =
-      FirebaseFirestore.instance.collection('users');
+      FirebaseFirestore.instance.collection('client_user');
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   // Function to fetch user data from Firestore
@@ -47,10 +48,11 @@ class _AccountScreenState extends State<AccountScreen> {
     getUserData().then((data) {
       setState(() {
         // Set the retrieved data to your controllers
-        nameController.text = data['name'] ?? '';
-        contactNumberController.text = data['contactnumber'] ?? '';
+        firstnameController.text = data['firstname'] ?? '';
+        lastnameController.text = data['lastname'] ?? '';
+        contactNumberController.text = data['contactNumber'] ?? '';
         homeAddressController.text = data['address'] ?? '';
-        birthdayController.text = data['birthdate'] ?? '';
+        birthdayController.text = data['birthday'] ?? '';
       });
     });
   }
@@ -145,9 +147,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 16.0),
                 buildListTile(
                   "Name",
-                  nameController,
+                  firstnameController,
                   FontAwesomeIcons.user,
-                  subtext: nameController.text,
+                  subtext: firstnameController.text,
                 ),
                 buildListTile(
                   "Contact Number",
